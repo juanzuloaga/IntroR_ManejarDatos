@@ -1,0 +1,570 @@
+---
+title:  "------------------ Introducción a R - Manejar Datos ------------------"
+subtitle:  <center> <h1>"Herramientas de análisis cuantitativo y su aplicación en la conservación de la biodiversidad"</h1> </center>
+author: "Melissa Guzmán, Juan Zuloaga y Keyvette Tabb"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  rmdformats::readthedown:
+    toc_depth: 4
+    toc_float:
+      collapsed: true
+    code_folding: show
+---
+<center><h2><span style="color:#3399FF">Ecodiversa </span> <span style="color:green">Tropical</span></h2> </center>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+knit_print.data.frame <- function(x, ...) {
+  head(x, 5) |> 
+    knitr::kable() |> 
+    paste(collapse = "\n") |>
+    knitr::asis_output()
+}
+
+registerS3method(
+  genname = "knit_print",
+  class = "data.frame",
+  method = knit_print.data.frame,
+  envir = asNamespace("knitr") 
+)
+```
+
+# 1. Objetivos de Aprendizaje
+
+Al final de este taller usted podrá saber cómo:
+
++ Agrupar y resumir datos usando el paquete "dplyr"
++ Usar las funciones mutate(), filter(), select(), group(), y summarise() del paquete "dplyr" para modificar estructuras de datos
++ Usar la funciones group() y summarise() para analizar estructuras de datos
++ Cargar datos en varios formatos
++ Usar las funciones pivot_longer() y pivot_wider() del paquete "tidyr" para modificar la disposición de estructuras de datos
++ Usar las funciones str_replace() y str_remove() del paquete "stringr" para manipular caracteres en estructuras de datos
+
+# 2. Para Empezar
+
+**Que es necesario para limpiar datos en R y por que es importante?**
+
+Ahora que aprendimos como visualizar datos, vamos hablar sobre unos paquetes y funciones necesarios para manejar datos, que fueron útil en crear visuales interesantes en el taller previo. Anteriormente, hablamos sobre la importancia de crear gráficos que resonaría con tu audiencia y reflejen tu mensaje deseado. Ahora que sabemos como cumplir esto, es importante aprender manipular datos para reflejar nuestro mensaje deseado. 
+
+Datos vienen en muchos tipos de formas y lo que es útil o practico para una aplicación no necesariamente trabajaría para otra. R tiene requisitos específicos sobre la configuración y los tipos de datos que se pueden pasar entre las funciones. Entonces, es muy importante tener la habilidad de manipular tus datos y darles la forma necesaria. Unas de las funciones que hablaremos sobre en este taller tienen el poder de manipular estructuras de datos en forma de filtrar, reorganizar, y acomodar caracteres. 
+
+**¿Qué es necesario para manipular datos en R?**
+
+Ahora, vamos a instalar los paquetes que vamos a usar en este taller. Para empezar, vamos a instalar los paquetes, "dplyr", "tidyr", y "stringr". Solamente es necesario hacer esto una vez porque los paquetes automáticamente serian guardados en la sección, "Packages", en RStudio. Los paquete te da acceso a todas las funciones creadas por el usuario y pueden ser instalados usando la linea de código siguiente:
+
+```{r, eval=FALSE}
+install.packages('dplyr')
+install.packages('tidyr')
+install.packages('stringr')
+```
+
+Cuando los paquetes terminen de instalarse, aparecería un mensaje indicando que los paquetes fueron instalados con éxito!
+
+# 3. Paquetes para crear graficos
+
+# 3.1 dplyr
+
+Dplyr es un paquete útil para reorganizar, modificar, y manipular datos. Es posible que usarías este paquete frecuentemente en el laboratorio. Por favor carga este paquete en R usando`library()`. Ahora, vamos hablar de cinco funciones especificas en el paquete, "dplyr" : `filter()`,`mutate()`,  `select()` , `group_by()`, y `summarise()`.
+
+<div style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #31708f; background-color: #d9edf7; border-color: #bce8f1;">
+**<span style="color:blue">Tips!</span>**
+
+Recuerda que cada vez que abres R de nuevo y deseas usar el paquete,`dplyr()`, tienes que cargar el paquete usando la función `library()`
+
+```{r, eval=TRUE, message =FALSE}
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(ggplot2)
+```
+</div>
+
+Sin embargo, antes de explorar los detalles de como aplicar estas funciones, necesitamos hablar sobre la estructura de funciones dplyr. Convenientemente, todas las funciones dplyr siguen la misma estructura básica:
+
+**IMAGEN - code explanation**
+
+La primera parte de esta linea de código es la función dplyr, como cualquier otra función en R. En la segunda parte de esta linea puedes encontrar el nombre de la estructura de datos. En este caso, nuestra estructura de datos se llama "butterfly" y contiene datos cualitativos de una población de mariposas Atlánticas del 2018. La tercer parte de la linea de código es una seria de comandes para especificar exactamente que la función dplyr debería hacer. Puedes usar desde uno a miles de comandes en una función dplyr para hacerlo mas general o especifico!
+
+En preparación para los ejemplos siguientes, por favor carga los datos "ATLANTIC_BUTTERFLIES_sites.csv" en R en un objeto con el nombre "butterfly".
+
+```{r, eval=TRUE}
+butterfly <- read.csv2("ATLANTIC_BUTTERFLIES_sites.csv")
+```
+
+<div style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #3c763d; background-color: #dff0d8; border-color: #d6e9c6;">
+**<span style="color:green"></span>** 
+
+En las siguientes lineas de código en este taller, las funciones no modificaran las estructuras de datos permanentemente por el propósito de los ejemplos instructivos. Para guardar las modificaciones del estructura de datos, uno debería asignar la función a un objeto. 
+
+Compara los dos ejemplos de código siguientes y pon atención a cual código modifica el estructura de datos y se encuentra en el "environment":
+
+**Codigo 1**
+
+```{r, eval=TRUE}
+filter(butterfly, sites_ID == "bor1122")
+```
+
+**Codigo 2**
+
+```{r, eval=TRUE}
+butterfly_modified <- filter(butterfly, sites_ID == "bor1120")
+```
+
+</div>
+
+# 3.2 dplyr: filter - filtrando datos basado en criteros
+
+Una de las funciones dplyr mas util es `filter()`. Con esta función, es posible filtrar observaciones especificas basado en las entradas en una o mas columnas. 
+
+Ahora vamos a explorar el estructura de datos "butterfly" en mas detalle. Puedemos abrir el estructura usando la función`view()` or con hacer clic en "butterfly" en el panel de  "data". Aquí podemos ver que la columna "numero de sitio" (sites_ID) tiene varios diferentes tipos de "números de sitios" (sites_ID). Que pasa si queríamos crear una estructura de datos que solamente incluye las observaciones del sitio "bor1001"? Esto es cuando utilizáramos la función `filter()` en la siguiente linea de código: 
+
+```{r, eval=TRUE}
+filter(butterfly, sites_ID == "bor1001")
+```
+
+**IMAGEN - new structure**
+
+Ademas, es posible a filtrar observaciones numéricamente. Por ejemplo, para obtener una estructura de datos que contiene todos los sitios donde callo mas de 1000 mm de lluvia, utilizáramos la siguiente linea de código. Pon atención que cuando filtras por numero, no es necesario poner comillas en el numero.
+
+```{r, eval=TRUE}
+filter(butterfly, A_rainfall >= 1000)
+```
+
+**IMAGEN - new structure**
+
+Finalmente, es posible usar un infinito numero de observaciones para filtrar el estructura de datos, todo dentro la misma linea de código. Por ejemplo, si querías crear una estructura de datos conteniendo solamente sitios en Rio De Jainero donde callo mas de 1000 mm de lluvia, usarías esta linea de código: 
+
+```{r, eval=TRUE}
+filter(butterfly, State == "RIO DE JANEIRO", A_rainfall >= 1000)
+```
+
+**IMAGEN - new structure**
+
+<div style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #3c763d; background-color: #dff0d8; border-color: #d6e9c6;">
+**<span style="color:green">Información!</span>** 
+
+La función `filter()` filtrara por la orden que los elementos son listados en la función. Por ejemplo, para la linea de código previo, R filtrara por "estado" (State) y luego por "cantidad de lluvia" (A_rainfall) . Con esta información, pon atención a la orden de los elementos para filtrar tus datos en la manera que deseas.
+
+</div>
+
+# 3.3 dplyr: select() - modificando estructaras de datos basado en nombre de columna
+
+Otra función importante es la función `select()`. Esta función es similar a la función del símbolo, "$", porque las dos funciones te dejan examinar una parte especifica del estructura de datos. Esta función is particularmente útil cuando uno anda manipulando estructuras de datos vasto. Específicamente, la función `select()` te deja dividir una o mas columnas de tu estructura de datos y transferir los a una nueva estructura de datos. 
+
+Por ejemplo, imagine que querías crear una estructura de datos conteniendo solamente las columnas "numero de sitio" (sites_ID) y "estado" (State) de la original estructura de datos, "butterfly". Puedes completar este comande usando la siguiente linea de código: 
+
+```{r, eval=TRUE}
+select(butterfly,sites_ID, State)
+```
+
+**IMAGEN - new structure or code explanation?** 
+
+<div style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #3c763d; background-color: #dff0d8; border-color: #d6e9c6;">
+**<span style="color:green">Información!</span>** 
+
+Las diferentes columnas que seleccionaste están dividas entre comas y los nombres de las columnas tienen que tener los mismos nombres de la estructura de datos original (esto incluye el uso de mayúsculas, espacios, guiones,periodos, etc).
+
+</div>
+
+Si planillas a crear una estructura de datos que contiene la mayoría de columnas de la estructura original, puede ser tedioso a listar todos los nombres de las columnas. Afortunadamente, la función `select()` permite quitar columnas usando el símbolo "-". Ahora, imagine que queremos a crear una estructura de datos que contiene todas las columnas de la original "butterfly" estructura excluyendo "numero de sitio" (sites_ID) y "estado" (State) utilizáramos la siguiente linea de código:
+
+```{r, eval=TRUE}
+select(butterfly,-sites_ID, -State)
+```
+
+**IMAGEN - new structure or code explanation?** 
+
+Finalmente, imagina que quieres crear una estructura de datos que contiene columnas que fueron agrupados en la estructura original. En este caso, puedes usar el símbolo, ":" para salvar tiempo en escribir todos los nombres de las columnas. Por ejemplo, pon atención a el estructura "butterfly" y imagina que querías crear un nuevo estructura de datos conteniendo las primeras cuatro columnas de la estructura "butterfly" de "numero de sitio" (sites_ID) a "altitud" (Altitude). Para completar este comande, puedes usar la siguiente linea de código:
+
+```{r, eval=TRUE}
+select(butterfly, sites_ID:Altitude)
+```
+
+**IMAGEN - new structure or code explanation?** 
+
+# 3.4 dplyr: mutate - agregando columnas a estructuras de datos
+
+La función `mutate()` esta utilizada para agregar columnas a una estructura de datos que ya existe. La nueva columna usualmente es una función de uno o mas de las columnas existentes. Por ejemplo, imagina que querías añadir una columna a la estructura "butterfly" igual a el logaritmo de la columna "A_rainfall". Esta acción puede ser completada en dos maneras. 
+
+Primero, puedes crear una nueva estructura de datos que incluye todas las columnas encontradas en el estructura original de "butterfly", con la nueva adición. Esto es similar a los ejemplos previos con `filter()` y `select()`:
+
+```{r, eval=TRUE}
+mutate(butterfly, Log_Rainfall = log(A_rainfall))
+```
+
+**IMAGEN - new structure or code explanation?** 
+
+Tambien es posible a añadir mas de una columna a una estructura de datos usando la linea de código:
+
+```{r, eval=FALSE}
+mutate(butterfly, Log_Rainfall = log(A_rainfall), climate_index = A_mean_temp * A_rainfall)
+```
+
+**IMAGEN - new structure or code explanation?** 
+
+En esta linea de código, añadimos dos columnas, la columna previa que toma el logaritmo de la columna "A_rainfall" y una nueva columna, "climate_index", que calcula el indice de clima con multiplicar las columnas "A_rainfall" y "A_mean_temp". 
+
+<div style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #a94442; background-color: #f2dede; border-color: #ebccd1;">
+
+<span style="color:red">**Que pasa cuando ejecutas la linea de codigo previa?**</span>
+
+**Insert picture of error**
+
+R indica que hay un error en calcular la indice de clima porque la columna de temperatura, "A_mean_temp", no es un numérico.
+
+Para examinar la estructura del estructura de datos, "butterfly", recuerda que es posible utilizar la función `str()`:
+
+```{r, eval=TRUE}
+str(butterfly)
+```
+
+Con usar la función `str()` se puede confirmar que la columna, "A_mean_temp", esta clasificado como un carácter en vez de numérico.
+
+</div>
+
+Entonces, para realizar la operación de multiplicación en calculando la indice de clima, deberíamos cambiar la columna,  "A_mean_temp", a la forma numérica usando la linea de código siguiente:
+
+```{r, eval=TRUE}
+butterfly <- mutate(butterfly, A_mean_temp = as.numeric(A_mean_temp))
+
+mutate(butterfly, Log_Rainfall = log(A_rainfall), climate_index = A_mean_temp * A_rainfall)
+```
+
+Aquí, estamos forzados a crear una nueva estructura de datos en orden de agregar dos (o mas) columnas separadas a la estructura. 
+
+# 3.5 dplyr: group_by - categorizando un estructura de datos por nombre de columnas
+
+Vamos a continuar a explorar mas funciones del paquete `dplyr()`. Ahora vamos a utilizar la función, `group_by()`. Esta función es útil cuando tienes dos variables categóricos y quieres analizar cuantos de cada grupo están en una o otra categoría. Esta función crea un estructura de datos que reorganiza el estructura de datos original basado en columnas particulares. 
+
+Esta función es mas útil usado con la función `summarise()`, que aprenderemos mas sobre en la sección siguiente. 
+
+```{r, eval=TRUE}
+Grouped_Sites <- group_by(butterfly, sites_ID)
+Grouped_Sites
+```
+
+**IMAGEN - code explanation** 
+
+Mirando los resultados de la función `group_by()` veras que la estructura de datos ahora esta organizado por categoría pero todavía se ve muy similar al estructura original. 
+
+# 3.6 dplyr: summarise - agregando columnas sumadas a estructuras de datos
+
+Ahora, regresaremos a la funcion `summarise()` que mencionamos en la sección previa. Esta función calcula un estadístico especifico en las columnas indicados en tu linea de código y guarda estos valores en una nueva columna que esta agregado a tu estructura de datos. Cuando las funciones `summarise()` y `group_by()` están utilizados juntos, la estadística esta calculado para cada grupo. Por ejemplo, vamos a contar el numero de ocurrencias en cada grupo en nuestro estructura de datos, "butterfly" usando la función `n()` 
+
+```{r, eval=TRUE}
+summarise(Grouped_Sites, n())
+```
+
+**IMAGEN - new structure or code explanation?** 
+
+## 4. tidyr
+
+Asimismo, tidyr es otro paquete que puede ayudar el usuario a manipular un estructura de datos. El paquete tidyr específicamente es útil para manipular un estructura de datos entre un estructura larga a un estructura ancho y el inverso. 
+
+<div style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #3c763d; background-color: #dff0d8; border-color: #d6e9c6;">
+**<span style="color:green">Información!</span>** 
+
+Un estructura de datos en la forma larga contiene valores que no se repiten en la primera columna. Al contrario, un estructura de datos con la forma ancho contiene valores que se repiten en la primer columna. Por ejemplo, considere las dos estructuras de datos conteniendo los mismos datos en diferentes formas: 
+
+*INSERT TABLE EXAMPLES*
+
+</div>
+
+Pero por que es importante manipular un estructura de datos en esta manera? Los paquetes `ggplot()`y `ggplot2()` que usamos en el taller previo para crear gráficos, prefieren visualizar un estructura de datos de la forma larga en vez de ancho. 
+
+Recuerda que cada vez que abres R de nuevo y deseas usar el paquete,`tidyr()`, tienes que cargar el paquete usando la función `library()`:
+
+```{r, eval=FALSE}
+library(tidyr)
+```
+
+# 4.1 tidyr: pivot_longer - modificando estructuras de datos a forma larga 
+
+La primera función importante del paquete tidyr es 'pivot_longer()'. Esta función cambia el formato de un estructura de datos, aumentando el numero de filas y reduciendo el numero de columnas, creando un estructura de datos del formato larga. 
+
+Vamos a utilizar el estructura de datos sin modificacion, "polar", del taller previo para explorar esta función. Recuerda cargar el estructura de datos usando la linea siguiente:
+
+```{r, eval=TRUE}
+polar <- read.delim("ANT-XXVIII_5_seabirds_marine_mammals.tab", skip = 154)
+```
+
+Para manipular el estructura de datos, "polar", a forma larga es posible utilizar la linea de código siguiente:
+
+```{r, eval=TRUE}
+polar_longer <- pivot_longer(polar, names_to = 'species', values_to = 'abundance', `E..chrysocome......Rockhopper.penguin.`:`Mola.mola......Sun.fish.`)
+polar_longer
+```
+
+# 4.2 tidyr: pivot_wider - modificando estructuras de datos a forma ancho
+
+La segunda función que hablaremos sobre es el inverso de la primera función. El inverso a `pivot_longer` es `pivot_wider`. Esta función manipula el estructura de datos al formato ancho con aumentar el numero de columnas y reduciendo el numero de filas.  
+
+Para manipular el estructura de datos, "polar_longer", a la forma ancho previo puedemos utilizar la linea de código siguiente:
+
+```{r, eval=TRUE}
+polar_wider <- pivot_wider(polar_longer, names_from = 'species', values_from = 'abundance')
+polar_wider
+```
+
+## 5. stringr
+
+Últimamente, otro paquete útil cuando manejando datos, específicamente cuando trabajando con caracteres o "strings" es 'stringr()`. Este paquete puede manipular caracteres individuos dentro un vector de caracteres, anidar o eliminar espacio blanco, y identificar patrones en un vector de caracteres. 
+
+<div style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #3c763d; background-color: #dff0d8; border-color: #d6e9c6;">
+**<span style="color:green">Información!</span>** 
+  
+  Las funciones del paquete `stringr()` empiezan con "str_" que se ve muy similar a la función, `str()`, que discutimos en el taller previo. Sin embargo, hay no relación entre estas funciones como `str()` muestra la estructura de un conjunto de datos. 
+  
+</div>
+
+<div style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #31708f; background-color: #d9edf7; border-color: #bce8f1;">
+**<span style="color:blue">Tips!</span>**
+
+Recuerda que cada vez que abres R de nuevo y deseas usar el paquete,`stringr()`, tienes que cargar el paquete usando la función `library()`
+
+```{r, eval=FALSE}
+library(stringr)
+```
+</div>
+
+En la siguiente parte del taller, vamos a usar el conjunto de datos, "parrot". La diferencia es que estos datos son la versión original y sin modificaciones de "parrot_clean" del taller previo. Empezamos con cargar los datos y asignarlos al objeto, "parrot":
+
+```{r, eval=TRUE}
+parrot <- read.delim("Ferrer-Paris_2013.tab", skip = 27)
+colnames_parrot <- colnames(parrot)
+```
+
+# 5.1 stringr: str_replace - reemplazar characteres en estructuras de datos
+
+La primera función del paquete `stringr()` que hablaremos sobre es `str_replace()`. Esta función es importante cuando un usuario quiere reemplazar caracteres específicos del estructura de datos. En el estructura de datos, "parrot", los nombres de los especies están separados usando colecciones de puntos. Por ejemplo, el nombre del primer especie esta escrito como, "A..Amazonica....". Vamos a utilizar la linea de código siguente para reemplazar el primer par de puntos con un guion bajo:
+
+```{r, eval=TRUE}
+parrot_replace <- str_replace(colnames_parrot, "\\.\\.", "_")
+parrot_replace
+```
+
+# 5.2 stringr: str_remove - eliminar characteres en estructura de datos
+
+Similarmente a `str_replace()`, la función, `str_remove()` puede en vez quitar caracteres específicos de un estructura de datos. Ahora que reemplazamos el primer grupo de puntos con un guion bajo, vamos a utilizar la función `str_remove()` para eliminar el segundo grupo de puntos al fin del nombre de los especies usando la linea de código siguiente: 
+
+```{r, eval=TRUE}
+parrot_remove <- str_remove(parrot_replace, "\\.\\.\\.\\.")
+parrot_remove
+```
+
+Ahora que hemos limpiado los nombres de las columnas, puedemos reemplazar los nombres en el estructura de datos (recuerda que extraemos los nombres cuando anda vamos haciendo cambios) usando la linea de código siguiente:
+
+```{r, eval=TRUE}
+colnames(parrot) <- parrot_remove
+```
+
+<div style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #3c763d; background-color: #dff0d8; border-color: #d6e9c6;">
+**<span style="color:green">Información!</span>** 
+  
+Cuando usando las funciones del paquete `stringr()` es importante notar que los ejemplos de las dos funciones previas solamente ejecutan el comande para la primera ocurrencia. Para aplicar el comande a todas las ocurrencias, el usuario debería añadir "_all" a la linea de código. 
+
+Refiere a la solucione de ejercicio cinco para un ejemplo de como hacer los cambios a los nombres en un paso utilizando `str_remove_all()`**
+
+</div>
+
+## 6. Ayuda en la web
+
+Relacionada a otras funciones de los paquetes mencionados:
+
++ <a href="https://dplyr.tidyverse.org/reference/index.html" target="_blank">Dplyr</a>
+
++ <a href="https://tidyr.tidyverse.org/reference/index.html" target="_blank">Tidyr</a>
+
++ <a href="https://stringr.tidyverse.org/reference/index.html" target="_blank">Stringr</a>
+
+
+# Practica! 
+
+<div style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #8a6d3b;; background-color: #fcf8e3; border-color: #faebcc;">
+**<span style="color:brown">Ejercicio 1</span>** 
+
+**Lee el archivo de ayuda para la función, `filter()`, en el paquete "dplyr". Que son las funciones de las diferentes partes de esta linea de código? Llena las lineas en el gráfico siguiente usando la información en "usage", "arguments, y "examples".**
+
+**IMAGE**
+
+<details>
+  <summary>Haz clic aquí para solucion!</summary>
+  
+**IMAGEN**
+
+</details>
+</div>
+
+<div style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #8a6d3b;; background-color: #fcf8e3; border-color: #faebcc;">
+**<span style="color:brown">Ejercicio 2</span>** 
+
+**Usando el estructura de datos, "parrot_data", agrega una columna que muestre la suma de las abundancias para cada especie. Verifica que la columna fue anidada usando la función, `head()`. Nota: este estructura de datos es otra versión modificada del original version, "parrot". Pon atención a usar el conjunto de datos correcto.**
+
+<details>
+  <summary>Haz clic aquí para solucion!</summary>
+  
+```{r, eval=TRUE}
+
+parrot_data <- read.csv("venezuelan_parrots_wide.csv")
+
+parrot_data_total <- parrot_data %>% 
+  # group by code/site
+  group_by(site) %>% 
+  #sum the abundance for all species
+  summarise_all(sum) %>%
+  rowwise() %>% #for every row
+  mutate(total_abundance = sum(c_across(A_amazonica:A_ochrocephala)) )
+
+```
+**IMAGEN**
+```{r, eval=TRUE}
+head(parrot_data_total)
+```
+**IMAGEN**
+
+</details>
+</div>
+
+<div style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #8a6d3b;; background-color: #fcf8e3; border-color: #faebcc;">
+**<span style="color:brown">Ejercicio 3</span>** 
+
+**Primero, usando el estructura de datos, "butterfly", agrupa el estructura de datos por "estado" (State) y suma los valores obtenidos por numero de ocurrencias. Segundo, visualiza los datos modificados en forma de un gráfico de barras ensenando el numero de ocurrencias por estado.**
+
+<details>
+  <summary>Haz clic aquí para solución!</summary>
+  
+```{r, eval=TRUE}
+butterfly_state <- butterfly %>%
+  group_by(State) %>% 
+  summarise(n_spe = n())
+```
+**IMAGEN**
+```{r, eval=TRUE}
+ggplot(data = butterfly_state, aes(x = State, y = n_spe)) + geom_bar(stat = "identity")
+```
+
+En el gráfico resultante, vemos que es difícil leer los nombres en el axis horizontal. Para corregir esto,es posible utilizar la adición a el código siguiente:
+
+```{r, eval=TRUE}
+ ggplot(data = butterfly_state, aes(x = State, y = n_spe)) + geom_bar(stat = "identity") +
+  theme(axis.text = element_text(angle = 90))
+```
+**IMAGEN**
+
+</details>
+</div>
+
+<div style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #8a6d3b;; background-color: #fcf8e3; border-color: #faebcc;">
+**<span style="color:brown">Ejercicio 4</span>** 
+
+**Utilizando el estructura de datos, "polar", crea un nuevo objeto, "high_temp", utilizando la función `filter()`, para demonstrar todas las temperaturas mas grande que 23 degrado C. Después, utiliza la función, "True/False", para ejecutar el comande previo. Pista: utiliza la función mutate() para crear una nueva columna**
+
+<details>
+  <summary>Haz clic aquí para solución!</summary>
+  
+```{r, eval=TRUE}
+str(polar)
+
+High_Temp <- filter(polar, Temp...C...Mid.mean.surface.water.temper.... >= 23)
+High_Temp
+```
+
+**IMAGEN**
+
+```{r, eval=FALSE}
+polar %>% mutate(temp_high_23 = ifelse(Temp...C...Mid.mean.surface.water.temper.... >= 23, TRUE, FALSE)) %>% 
+  filter(temp_high_23 ==TRUE) ##creating a new column that shows which temp are greater than 23 - makes a new column in order to do the same thing as the first code
+```
+</details>
+</div>
+
+<div style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #8a6d3b;; background-color: #fcf8e3; border-color: #faebcc;">
+**<span style="color:brown">Ejercicio 5</span>** 
+
+**En este ejercicio, vas a manipular el estructura de datos, "parrot".**
+
+**a) Elimina los especies que nunca estan registrados y también elimina información que no vamos a utilizar, "longitud" (Longitude), "latitud" (Latitude), y "tiempo en minutos" (Time..min.).** 
+
+**b) Reemplaza los puntos en los nombres de especies con guiones utilizando la función `str_replace()`.**
+
+**c) Ahora que hemos manipulado el estructura de datos a nuestro gusto, crea un "gráfico de barras" (Bar graph) visualizando la suma de abundancia para cada especies.** 
+
+
+<details>
+  <summary>Haz clic aquí para solución!</summary>
+
+```{r, eval=TRUE}
+parrot <- read.csv("parrot.csv")
+head(parrot)
+```
+**IMAGEN**
+```{r, eval=TRUE}
+parrot_clean_wrangle <- parrot %>%
+  ## remove species that never appear
+  select(-`A..dufresniana....`, -`A..festiva....`, -`A..autumnalis....`, -`A..mercenaria....`) %>% 
+  ## remove extra information that we are not going to use
+  select(-Longitude, -Latitude, -`Time..min.`) %>% 
+  ## rename code for site to make it more intuitive
+  rename(site = Code) 
+
+colnames(parrot_clean_wrangle) <- str_replace(str_remove_all(colnames(parrot_clean_wrangle), "\\.\\.\\.\\."), "\\.\\.", "_")
+
+head(parrot_clean_wrangle)
+```
+
+```{r, eval=TRUE}
+##filters everything using "or" - |
+parrot_clean_filter <- parrot_clean_wrangle %>% filter((A_amazonica != 0 | A_barbadensis != 0 | A_farinosa != 0 | A_ochrocephala != 0))
+```
+
+```{r, eval=FALSE}
+
+parrot_clean_filter %>%
+   pivot_longer(names_to = "Species", values_to = "Abundance", A_amazonica:A_ochrocephala) %>%
+  group_by(Species) %>%
+  summarise(total_abundance = sum(Abundance)) %>%
+  ggplot(aes(x = Species, y = total_abundance)) + geom_bar(stat = "identity")
+
+```
+</details>
+
+</div>
+
+<div style="padding: 15px; border: 1px solid transparent; border-color: transparent; margin-bottom: 20px; border-radius: 4px; color: #8a6d3b;; background-color: #fcf8e3; border-color: #faebcc;">
+**<span style="color:brown">Ejercicio 6</span>** 
+
+**En este ejercicio, utiliza el estructura de datos original, "butterfly_genus_site, para cambiar el estructura a forma ancho y asignar la nueva estructura al nombre "butterfly_wide". Después, cambia la estructure nueva, "butterfly_wide" de reverso a forma larga y asigna lo a un objeto, "butterfly_long", para practicar utilizando estas tipas de funciónes.**
+
+<details>
+  <summary>Haz clic aquí para solución!</summary>
+  
+```{r, eval=FALSE}
+butterfly_wide <- pivot_wider(butterfly_genus_site, names_from = Genus, values_from = n_spe)
+
+butterfly_wide <- pivot_wider(butterfly_genus_site, names_from = Genus, values_from = n_spe, values_fill = 0)
+
+butterfly_long <- pivot_longer(butterfly_wide, values_to = 'number_species', names_to = "genus", -sites_ID)
+
+butterfly_long <- pivot_longer(butterfly_genus_site )
+```
+  </details>
+ 
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
