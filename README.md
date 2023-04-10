@@ -13,9 +13,7 @@ Al final de este taller usted podrá saber cómo:
 + Usar las funciones str_replace() y str_remove() del paquete "stringr" para manipular caracteres en estructuras de datos
 
 # Desarrollado por:
-Keyvette (University of Southern California)
-Melissa Guzman (University of Southern California)
-
-# Edición
-Carolina Navia (Ecodiversa Tropical)
-Juan Zuloaga (Ecodiversa Tropical)
++ Keyvette (University of Southern California)
++ Melissa Guzman (University of Southern California)
++ Carolina Navia (Ecodiversa Tropical) - Edición
++ Juan Zuloaga (Ecodiversa Tropical)
