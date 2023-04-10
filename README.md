@@ -11,3 +11,11 @@ Al final de este taller usted podrá saber cómo:
 + Cargar datos en varios formatos
 + Usar las funciones pivot_longer() y pivot_wider() del paquete "tidyr" para modificar la disposición de estructuras de datos
 + Usar las funciones str_replace() y str_remove() del paquete "stringr" para manipular caracteres en estructuras de datos
+
+# Desarrollado por:
+Keyvette (University of Southern California)
+Melissa Guzman (University of Southern California)
+
+# Edición
+Carolina Navia (Ecodiversa Tropical)
+Juan Zuloaga (Ecodiversa Tropical)
